@@ -2,7 +2,7 @@ package practice_section3;
 
 import static practice_section3.MyLogger.log;
 
-public class custom_problem1 {
+public class custom_problem_1 {
     public static void main(String[] args) {
         String[] fileNames = new String[]{"video.mp3", "music.mp3", "document.pdf"};
         int[] fileSizes = {50, 30, 10};

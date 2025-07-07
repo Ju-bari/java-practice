@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static practice_section3.MyLogger.log;
 
-public class custom_problem2 {
+public class custom_problem_2 {
     private final static ConcurrentLinkedQueue<String> winnerPlayer = new ConcurrentLinkedQueue<>(); // 동시성 안정한 컬렉션 사용
     private final static ConcurrentLinkedQueue<Integer> winnerAttempts = new ConcurrentLinkedQueue<>();
     private static final Random random = new Random();

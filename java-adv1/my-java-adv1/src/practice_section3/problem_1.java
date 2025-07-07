@@ -2,7 +2,7 @@ package practice_section3;
 
 import static practice_section3.MyLogger.log;
 
-public class problem1 {
+public class problem_1 {
     public static void main(String[] args) {
         CountThread countThread = new CountThread();
         countThread.start();

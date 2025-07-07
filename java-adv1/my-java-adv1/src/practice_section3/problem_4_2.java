@@ -2,7 +2,7 @@ package practice_section3;
 
 import static practice_section3.MyLogger.log;
 
-public class problem4_2 {
+public class problem_4_2 {
     public static void main(String[] args) {
 
         Thread threadA = new Thread(new Printer("A", 1000), "Thread-A");

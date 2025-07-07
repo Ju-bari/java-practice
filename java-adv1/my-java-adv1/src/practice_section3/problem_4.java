@@ -2,7 +2,7 @@ package practice_section3;
 
 import static practice_section3.MyLogger.log;
 
-public class problem4 {
+public class problem_4 {
     public static void main(String[] args) {
         ThreadA threadA = new ThreadA();
         threadA.setName("threadA");

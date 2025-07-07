@@ -106,7 +106,7 @@ class GameResultCollector implements Runnable {
 }
 
 // 메인 클래스
-public class custom_problem2_2 {
+public class custom_problem_2_2 {
     public static void main(String[] args) {
         // 게임 설정
         final int TARGET_NUMBER = 42;
