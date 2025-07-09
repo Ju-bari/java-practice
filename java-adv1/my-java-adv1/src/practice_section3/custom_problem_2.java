@@ -3,7 +3,7 @@ package practice_section3;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static practice_section3.MyLogger.log;
+import static utill.MyLogger.log;
 
 public class custom_problem_2 {
     private final static ConcurrentLinkedQueue<String> winnerPlayer = new ConcurrentLinkedQueue<>(); // 동시성 안정한 컬렉션 사용

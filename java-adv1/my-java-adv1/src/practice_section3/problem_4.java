@@ -1,6 +1,6 @@
 package practice_section3;
 
-import static practice_section3.MyLogger.log;
+import static utill.MyLogger.log;
 
 public class problem_4 {
     public static void main(String[] args) {
