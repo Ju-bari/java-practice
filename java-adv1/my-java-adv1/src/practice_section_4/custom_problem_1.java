@@ -1,4 +1,4 @@
-package practice_section4;
+package practice_section_4;
 
 import static java.lang.Thread.sleep;
 import static utill.MyLogger.log;

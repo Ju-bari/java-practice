@@ -1,11 +1,14 @@
-package practice_section3;
+package practice_section_5;
 
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static utill.MyLogger.log;
 
-public class custom_problem_2 {
+/*
+ * - '정답이 아닌 경우(높은/낮음) 해당 힌트를 바탕으로 랜덤한 숫자를 생성해야 함 (선택 로직)' 부분 구현 안함
+ */
+public class custom_problem_1 {
     private final static ConcurrentLinkedQueue<String> winnerPlayer = new ConcurrentLinkedQueue<>(); // 동시성 안정한 컬렉션 사용
     private final static ConcurrentLinkedQueue<Integer> winnerAttempts = new ConcurrentLinkedQueue<>();
     private static final Random random = new Random();
@@ -17,7 +20,6 @@ public class custom_problem_2 {
         Thread[] threads = new Thread[playerNames.length];
 
         log("숫자 게임 시작! 정답: " + TARGET_NUMBER);
-
 
         // 데몬 스레드
         Thread gameResultCollector = new Thread(new GameResultCollectorRunnable());

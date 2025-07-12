@@ -1,4 +1,4 @@
-package practice_section3;
+package practice_section_3;
 
 import static utill.MyLogger.log;
 

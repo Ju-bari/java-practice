@@ -1,21 +1,20 @@
-package practice_section4;
+package practice_section_4;
 
 import static java.lang.Thread.sleep;
 import static utill.MyLogger.log;
 
-public class problem_1 {
+public class problem_2 {
     public static void main(String[] args) throws InterruptedException {
-        Thread t1 = new Thread(new MyTask(), "t1");
-        Thread t2 = new Thread(new MyTask(), "t2");
-        Thread t3 = new Thread(new MyTask(), "t3");
+        Thread t1 = new Thread(new problem_1.MyTask(), "t1");
+        Thread t2 = new Thread(new problem_1.MyTask(), "t2");
+        Thread t3 = new Thread(new problem_1.MyTask(), "t3");
 
         t1.start();
-        t1.join();
-
         t2.start();
-        t2.join();
-
         t3.start();
+
+        t1.join();
+        t2.join();
         t3.join();
 
         System.out.println("모든 스레드 실행 완료");
