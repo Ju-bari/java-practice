@@ -266,4 +266,97 @@
 
 <br><br><br>
 
-# 섹션 10. 생성자 소비자 문제2 (2문제)
+# 섹션 10. 생성자 소비자 문제2 (1문제)
+
+## 문제1: 온라인 주문 처리 시스템 구현(고급)
+
+### 문제 설명
+
+대형 온라인 쇼핑몰에서 주문이 폭주하는 상황입니다. 주문 접수 속도가 처리 속도보다 빠를 수 있으므로, 주문을 임시 저장하고 여러 직원이 나누어 처리하는 시스템이 필요합니다.
+
+### 요구사항
+
+### 1. Order 클래스 구현
+
+- orderId (String)
+- customerName (String)
+- productName (String)
+- quantity (int)
+- price (int)
+- orderTime (LocalDateTime)
+- 생성자: 전체 필드
+- `getTotalPrice()` 메서드: price * quantity
+- `toString()` 메서드: orderId, customerName, productName (예상 출력 참고)
+
+### 2. BoundedQueue 클래스 구현
+
+- `ReentrantLock`과 `Condition`을 사용하여 직접 구현
+- 내부 자료구조는 `ArrayDeque` 사용
+- 생산자 전용 Condition과 소비자 전용 Condition 분리
+- `void put(Order order)` : 큐에 아이템 추가 (큐가 가득 차면 대기)
+- `Order take()` : 큐에서 아이템 제거 (큐가 비어있으면 대기)
+- `String toString()` : 큐에 대한 toString() 메서드 사용
+
+### 3. ProducerTask 클래스 구현 (Runnable 인터페이스 구현)
+
+- 생성자: `ProducerTask(BoundedQueue<Order> queue, int orderCount)`
+- 지정된 개수만큼 주문을 생성하여 큐에 추가
+- 주문 ID는 "ORD" + 3자리 숫자 형태로 생성
+- 소비자와 상품 이름 예시를 참고하여 랜덤으로 주문을 생성
+- 소비자 이름(7개) : `customerNames = {"세종대왕", "이이", "김정희", "정약용", "정도전", "송시열", "이황"}`
+- 상품 이름(7개) : `productNames = {"클렌징오일", "마라탕", "전자레인지", "무선이어폰", "그램", "선글라스", "선풍기"}`
+- 주문 수량: 1~100 랜덤
+- 가격: 1~10000 랜덤
+- 생성 날짜: 현재 생성 시간
+- Task 관련 메시지 출력 (예상 출력 참고)
+
+### 4. ConsumerTask 클래스 구현 (Runnable 인터페이스 구현)
+
+- 생성자: `ConsumerTask(BoundedQueue<Order> queue, OnlineOrderSystem system)`
+- 큐에서 주문을 꺼내어 처리
+- 시스템이 종료되고 큐가 비어있을 때까지 계속 처리
+- 각 주문 처리 시간은 1초
+- `interrupted()` 메서드 사용
+- Task 관련 메시지 출력 (예상 출력 참고)
+
+### 5. OnlineOrderSystem 클래스 구현
+
+- totalRevenue (double)
+- processedOrders (int)
+- 동시성 문제 방지를 위한 장치 필요
+- `void processOrder(Order order)` : 개별 주문 처리(매출 누적, 완료 주문수 증가)
+- `int getTotalRevenue()` : 총 매출액 반환
+- `int getProcessedOrders()` : 처리된 주문 수 반환
+
+### 6. ShoppingMain 클래스에서 다음 시나리오 테스트
+
+- BoundedQueue<Order> 생성 (최대 용량: 15개)
+- OnlineOrderSystem 인스턴스 생성
+- 5개의 생산자 스레드 생성
+    - 각각 ProducerTask로 8개의 주문을 0.3초 간격으로 생성
+- 3개의 소비자 스레드 생성
+    - 각각 ConsumerTask로 주문 처리
+- 모든 생산자 스레드 완료 대기
+- 15초 후, 소비자 강제 종료
+- 최종 결과 출력 (총 주문 수, 총 매출액)
+
+### 핵심 구현 포인트
+
+- Task 패턴 사용: ProducerTask, ConsumerTask로 분리
+- BoundedQueue에서 `lock.lock()`, `condition.await()`, `condition.signal()`, `lock.unlock()` 사용
+- 생산자용 Condition과 소비자용 Condition 분리
+- 예외 처리 및 스레드 안전성 보장
+
+### 예상 출력
+
+```
+[main] === 온라인 주문 처리 시스템 시작 ===
+[producer-1] 주문 생성: Order{orderId='ORD001', customerName='김철수', productName='노트북'}
+[producer-2] 주문 생성: Order{orderId='ORD002', customerName='이영희', productName='마우스'}
+[consumer-2] 주문 처리 시작: Order{orderId='ORD001', customerName='김철수', productName='노트북'}
+[consumer-2] 주문 처리 완료: Order{orderId='ORD001', customerName='김철수', productName='노트북'}
+...
+[main] === 주문 처리 완료 ===
+[main] 총 처리 주문: 40개
+[main] 총 매출액: 5750000원
+```
