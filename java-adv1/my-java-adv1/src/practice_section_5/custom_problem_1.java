@@ -2,16 +2,19 @@ package practice_section_5;
 
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static utill.MyLogger.log;
 
 /*
  * - '정답이 아닌 경우(높은/낮음) 해당 힌트를 바탕으로 랜덤한 숫자를 생성해야 함 (선택 로직)' 부분 구현 안함
+ * - run()에서 바로 interrupted로 빠져나오지 않는 한계가 있음
  */
 public class custom_problem_1 {
-    private final static ConcurrentLinkedQueue<String> winnerPlayer = new ConcurrentLinkedQueue<>(); // 동시성 안정한 컬렉션 사용
-    private final static ConcurrentLinkedQueue<Integer> winnerAttempts = new ConcurrentLinkedQueue<>();
-    private static final Random random = new Random();
+    public static final ConcurrentLinkedQueue<String> winnerPlayer = new ConcurrentLinkedQueue<>(); // 동시성 안정한 컬렉션 사용
+    public static final ConcurrentLinkedQueue<Integer> winnerAttempts = new ConcurrentLinkedQueue<>();
+    public static final Random random = new Random();
+    public static final AtomicBoolean isComplete  = new AtomicBoolean(false);
 
     public static void main(String[] args) throws InterruptedException {
         int TARGET_NUMBER = 42;
@@ -37,7 +40,8 @@ public class custom_problem_1 {
             thread.join();
         }
 
-        if (!winnerPlayer.isEmpty()) {
+        // 결과 확인
+        if (isComplete.get() || !winnerPlayer.isEmpty()) {
             log("우승자: " + winnerPlayer.peek() + " (" + winnerAttempts.peek() + "번 시도)");
         } else {
             log("최대 도전 횟수까지 맞춘 인원이 없습니다.");
@@ -63,9 +67,9 @@ public class custom_problem_1 {
     }
 
     static class NumberGame implements Runnable {
-        String playerName;
-        int targetNumber;
-        int maxAttempts;
+        private final String playerName;
+        private final int targetNumber;
+        private final int maxAttempts;
 
         public NumberGame(String playerName, int targetNumber, int maxAttempts) {
             this.playerName = playerName;
@@ -76,15 +80,14 @@ public class custom_problem_1 {
         @Override
         public void run() {
             int tryAttempts = 1;
-            boolean success = false;
+            boolean isSuccess = false;
 
             while (tryAttempts < maxAttempts) {
-//                int tryNumber = (int) (Math.random() * 100 + 1);
                 int tryNumber = random.nextInt(100) + 1;
 
                 if (tryNumber == targetNumber) {
                     log("[" + playerName + "] 시도 " + tryAttempts + ": " + tryNumber + " -> 정답!");
-                    success = true;
+                    isSuccess = true;
                     break;
                 } else if (tryNumber > targetNumber) {
                     log("[" + playerName + "] 시도: " + tryAttempts + ": " + tryNumber + " -> 너무 높음");
@@ -94,12 +97,12 @@ public class custom_problem_1 {
 
                 tryAttempts++;
 
-                if (!winnerPlayer.isEmpty()) {
+                // 다른 플레이어가 먼저 성공했는지 확인
+                if (isComplete.get()) {
                     break;
                 }
 
                 // 사고 시간
-//                int sleepTime = (int) (Math.random() * 1001 + 500);
                 int sleepTime = random.nextInt(1000) + 500;
                 try {
                     Thread.sleep(sleepTime);
@@ -109,7 +112,7 @@ public class custom_problem_1 {
             }
 
             // 종료 로직
-            if (success) {
+            if (isSuccess) {
                 winnerPlayer.offer(playerName);
                 winnerAttempts.offer(tryAttempts);
             }
