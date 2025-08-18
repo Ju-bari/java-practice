@@ -15,8 +15,8 @@
 | 섹션 10 | 생성자 소비자 문제2 |  |  | 1 |
 | 섹션 11 | CAS: 동기화와 원자적 연산 |  | 1 |  |
 | 섹션 12 | 동시성 컬렉션 |  |  | 1 |
-| 섹션 13 | 스레드 풀과 Executor 프레임워크1 |  |  |  |
-| 섹션 14 | 스레드 풀과 Executor 프레임워크2 |  |  |  |
+| 섹션 13 | 스레드 풀과 Executor 프레임워크1 |  |  | 2 |
+| 섹션 14 | 스레드 풀과 Executor 프레임워크2 |  |  | 2 |
 
 <br>
 
@@ -52,6 +52,7 @@
 <br><br><br>
 
 # 섹션 4. 스레드 제어와 생명 주기1 (1문제)
+
 ## 문제 1: 순차적 데이터 처리 (초급)
 
 ### 요구사항
@@ -122,7 +123,7 @@
 
 ## 문제 1: 배달 주문 처리 시스템 (고급)
 
-### 문제상황
+### 문제 설명
 
 배달 앱에서 주문이 들어오면 주방에서 요리를 준비하고, 배달원이 픽업하여 배달하는 시스템을 생산자-소비자 패턴으로 구현하세요. **BoundedQueue를 wait()/notify() 메커니즘을 사용하여 직접 구현**해야 합니다.
 
@@ -380,7 +381,7 @@
 2. `CustomerThread` 클래스(Runnable 구현)
     - 고객의 주문 처리를 시뮬레이션 진행
     - 각 고객은 4개의 수량을 주문 시도
-3. ShoppingMain
+3. ShoppingMain 클래스
     - 상품 1개를 생성 (ex. 상품ID: 1, 상품명: 자전거, 재고량 30)
     - 초기 재고는 30개로 설정
     - 10명의 고객이 동시에 주문하는 상황
@@ -409,3 +410,280 @@
 [     main] === 주문 처리 완료 ===
 [     main] 최종 재고: 2개
 ```
+
+<br><br><br>
+
+# 섹션 12. 동시성 컬렉션 (1문제)
+
+<br><br><br>
+
+# 섹션 13. 스레드 풀과 Executor 프레임워크1 (2문제)
+
+## 문제1: 증권회사 주식 가격 조회 시스템(고급)
+
+### 문제 설명
+
+증권회사에서 여러 주식의 실시간 가격을 동시에 조회하는 시스템을 구현해야 합니다. 각 주식의 가격 조회는 시간이 걸리는 작업이므로, ExecutorService를 사용하여 병렬로 처리하고, Callable과 Future를 활용하여 결과를 수집해야 합니다.
+
+### 요구사항
+
+1. **Stock 클래스 구현**
+    - `String symbol` (주식 코드)
+    - `String name` (회사명)
+    - 생성자와 getter 메서드
+2. **StockPrice 클래스 구현**
+    - `String symbol` (주식 코드)
+    - `double price` (가격)
+    - `LocalDateTime timestamp` (조회 시각)
+    - 생성자, getter 메서드, toString() 오버라이드
+3. **StockPriceService 클래스 구현**
+    - `StockPrice getPrice(Stock stock)` 메서드
+    - 실제 API 호출을 시뮬레이션하기 위해 1~3초 랜덤 지연
+    - 가격은 1000-50000 사이의 랜덤 값
+4. PriceSearchCallabe 클래스 (Callable 구현)
+    - Stock 정보를 바탕으로 stockPriceService를 통해 정보 조회
+    - 조회 중 관련 로그 제공 (예상 출력 참고)
+5. **StockTradingSystem 클래스 구현**
+    - `ExecutorService executor` 필드 (FixedThreadPool 사용, 스레드 풀 크기: 5)
+    - `StockPriceService priceService` 필드
+    - `List<StockPrice> getAllStockPrices(List<Stock> stocks)` 메서드
+        - 모든 주식 가격을 병렬로 조회
+        - Callable과 Future 사용
+        - 모든 작업 완료 후 결과 반환
+    - `void shutdown()` 메서드로 ExecutorService 종료
+6. **Main 클래스에서 테스트**
+    - 최소 7개의 서로 다른 주식 생성 (ex. 삼성전자, LG전자, SK하이닉스, NAVER, 카카오, 현대차, 포스코)
+    
+    ```java
+    List<Stock> stocks = List.of(
+            new Stock("005930", "삼성전자"),
+            new Stock("000660", "SK하이닉스"),
+            new Stock("035420", "NAVER"),
+            new Stock("035720", "카카오"),
+            new Stock("005380", "현대차"),
+            new Stock("066570", "LG전자"),
+            new Stock("005490", "POSCO홀딩스")
+    );
+    ```
+    
+    - StockTradingSystem을 사용하여 모든 주식 가격 조회
+    - 시작 시간과 종료 시간을 측정하여 전체 소요 시간 출력 (예상 출력 참고)
+    - 시스템 종료
+    - 시작, 시스템 결과, 종료 관련 로그 출력 (예상 출력 참고)
+
+### 예상 출력
+
+```java
+[     main] === 증권회사 주식 가격 조회 시스템 ===
+[pool-1-thread-3] NAVER 조회 중...
+[pool-1-thread-5] 현대차 조회 중...
+[pool-1-thread-1] 삼성전자 조회 중...
+[pool-1-thread-4] 카카오 조회 중...
+[pool-1-thread-2] SK하이닉스 조회 중...
+[pool-1-thread-3] LG전자 조회 중...
+[pool-1-thread-2] POSCO홀딩스 조회 중...
+[     main] === 증권회사 주식 가격 조회 시스템 결과 ===
+[     main] StockPrice{symbol='005930', price=22911.7447284399, timestamp=2025-08-17T22:20:43.161538}
+[     main] StockPrice{symbol='000660', price=5628.202074875279, timestamp=2025-08-17T22:20:42.565242}
+[     main] StockPrice{symbol='035420', price=7990.671465882071, timestamp=2025-08-17T22:20:42.183205}
+[     main] StockPrice{symbol='035720', price=49811.58433055176, timestamp=2025-08-17T22:20:42.991665}
+[     main] StockPrice{symbol='005380', price=31627.981760164017, timestamp=2025-08-17T22:20:43.967199}
+[     main] StockPrice{symbol='066570', price=46087.63838877258, timestamp=2025-08-17T22:20:44.185276}
+[     main] StockPrice{symbol='005490', price=12415.551752912213, timestamp=2025-08-17T22:20:45.070769}
+[     main] [총 소요 시간: 4.05초]
+[     main] === 증권회사 주식 가격 조회 시스템 종료 ===
+```
+
+<br>
+
+## 문제2: 증권회사 대량 주문 처리 시스템과 긴급 취소 기능(고급)
+
+### 문제 설명
+
+증권회사에서 대량 매수/매도 주문을 처리하는 시스템을 운영 중입니다. 시장 상황이 급변할 때 진행 중인 주문들을 긴급히 취소해야 하는 경우가 있습니다. 이때 Future.cancel()의 `mayInterruptIfRunning` 파라미터에 따른 동작 차이를 이해하고 구현해야 합니다.
+
+### 문제 설명 상세
+
+- 일반 취소 (false): 아직 시작되지 않은 주문만 취소 (실행 중인 주문은 완료까지 대기)
+- 강제 취소 (true): 실행 중인 주문도 강제로 중단 (InterruptedException 발생)
+
+### 요구사항
+
+1. TradeOrder 클래스 구현
+    - `String orderId` (주문 ID)
+    - `String symbol` (주식 코드)
+    - `int quantity` (수량)
+    - `TradeOrderType orderType` ("BUY" 또는 "SELL"로 ENUM 제작)
+    - 생성자, getter, toString() 메서드
+2. TradeResult 클래스 구현
+    - `String orderId` (주문 ID)
+    - `TradeResultStatus status` ("COMPLETED", "CANCELLED", "INTERRUPTED", "FAILED"로 ENUM 제작)
+    - `String message` (결과 메시지)
+    - `String errorType` (오류 타입 - 예외 발생 시)
+    - 생성자, getter, toString() 메서드
+3. OrderProcessor 클래스 구현 (Callable<TradeResult> 구현)
+    - `TradeOrder order` 필드
+    - 생성자로 order 한 개 받기
+    - `call()` 메서드 구현:
+        - TradeOrder의 ID와 ‘처리 중…’ 출력 (예상 출력 참고)
+        - 주문 처리 시뮬레이션 : Thread.sleep() 사용 및 4~8초 랜덤 소요
+        - 예외 상황 시뮬레이션: 주문 ID가 "ERROR"로 시작하면 RuntimeException 발생
+            - FAILED 상태인 TradeResult 반환
+            - 메시지: "시스템 오류로 인한 주문 실패"
+        - 네트워크 오류 시뮬레이션: 주문 ID가 "NETWORK"로 시작하면 IOException 발생
+            - FAILED 상태인 TradeResult 반환
+            - 메시지: "네트워크 오류로 인한 주문 실패"
+        - InterruptedException 발생 시 TradeOrder의 ID와 ‘실행 중인 주문 강제 종료…’ 출력 (예상 출력 참고)
+        - 정상 완료 시 COMPLETED" 상태인 TradeResult 반환
+            - 메시지: “주문이 성공적으로 완료되었습니다”
+4. TradingSystem 클래스 구현
+    - `ExecutorService executor` (FixedThreadPool, 크기: 3)
+    - `Map<String, Future<TradeResult>> runningOrders` (실행 중인 주문 관리)
+    - `submitOrder(TradeOrder order)` 메서드: 주문 제출 후 Future를 Map에 저장
+    - `cancelOrder(String orderId, boolean forceCancel)` 메서드:
+        - TradeOrder의 ID와 ‘취소 중…’ 출력 (예상 출력 참고)
+        - forceCancel이 true면 cancel(true) 호출
+        - forceCancel이 false면 cancel(false) 호출
+    - `waitForAllOrders()` 메서드: runningOrders의 모든 주문 완료 대기 및 결과 수집
+        - Future.get() 예외 처리 필수:
+            - 각 예외별로 적절한 TradeResult 생성
+            - `CancellationException`: 취소된 작업에 대한 get() 호출 시 발생 (CANCLLED 상태인 TradeResult 반환)
+            - `ExecutionException`: 작업 중 발생한 예외 처리 (getCause()로 원본 예외 확인)
+            - `InterruptedException`: get() 대기 중 현재 스레드가 interrupt된 경우 예외 처리
+            - Callable의 예외 처리, Future.get()의 예외 처리, main 스레드의 예외 처리를 고려하여 작성
+    - `shutdown()` 메서드
+5. Main 클래스에서 시나리오 테스트
+    - 시나리오 1: 5개 주문 제출 후 정상 작동 테스트
+        
+        ```java
+        tradingSystem.submitOrder(new TradeOrder("BUY001", "AAPL", 100, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL002", "GOOG", 50, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY003", "MSFT", 200, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL004", "TSLA", 10, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY005", "AMZN", 30, TradeOrderType.BUY));
+        ```
+        
+    - **시나리오 2**: 5개 주문 제출 후 2초 뒤 일반 취소(false) 테스트
+        - 제출한 주문 중 음과 마지막 주문 취소
+        
+        ```java
+        tradingSystem.submitOrder(new TradeOrder("BUY001", "AAPL", 100, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL002", "GOOG", 50, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY003", "MSFT", 200, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL004", "TSLA", 10, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY005", "AMZN", 30, TradeOrderType.BUY));
+        ```
+        
+    - **시나리오 3**: 5개 주문 제출 후 3초 뒤 강제 취소(true) 테스트
+        - 제출한 주문 중 처음과 마지막 주문 취소
+        
+        ```java
+        tradingSystem.submitOrder(new TradeOrder("BUY001", "AAPL", 100, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL002", "GOOG", 50, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY003", "MSFT", 200, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL004", "TSLA", 10, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY005", "AMZN", 30, TradeOrderType.BUY));
+        ```
+        
+    - **시나리오 4**: 예외 발생 주문들을 포함한 테스트
+        - "ERROR001", "NETWORK002" 등 예외를 유발하는 주문 ID 사용
+        - Future.get() 호출 시 발생하는 다양한 예외 상황 테스트
+        
+        ```java
+        tradingSystem.submitOrder(new TradeOrder("SELL002", "GOOG", 50, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY003", "MSFT", 200, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("ERROR_SELL004", "TSLA", 10, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("BUY005", "AMZN", 30, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("NETWORK_BUY006", "AAPL", 150, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL007", "NVDA", 25, TradeOrderType.SELL));
+        tradingSystem.submitOrder(new TradeOrder("ERROR_BUY008", "META", 75, TradeOrderType.BUY));
+        tradingSystem.submitOrder(new TradeOrder("SELL009", "NFLX", 40, TradeOrderType.SELL));
+        ```
+        
+
+### 예상 출력
+
+- 시나리오1
+
+```java
+[     main] === 증권회사 대량 주문 처리 시스템 ===
+[pool-1-thread-2] SELL002 처리 중...
+[pool-1-thread-3] BUY003 처리 중...
+[pool-1-thread-1] BUY001 처리 중...
+[pool-1-thread-2] SELL004 처리 중...
+[pool-1-thread-1] BUY005 처리 중...
+[     main] TradeResult{orderId='SELL002', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='SELL004', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY005', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY003', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY001', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] === 증권회사 대량 주문 처리 시스템 종료 ===
+```
+
+- 시나리오2
+
+```java
+[     main] === 증권회사 대량 주문 처리 시스템 ===
+[pool-1-thread-2] SELL002 처리 중...
+[pool-1-thread-1] BUY001 처리 중...
+[pool-1-thread-3] BUY003 처리 중...
+[     main] SELL002 취소 중...
+[     main] BUY005 취소 중...
+[pool-1-thread-3] SELL004 처리 중...
+[     main] TradeResult{orderId='SELL002', status=CANCELLED, message='주문이 취소되었습니다', errorType='CancellationException'}
+[     main] TradeResult{orderId='SELL004', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY005', status=CANCELLED, message='주문이 취소되었습니다', errorType='CancellationException'}
+[     main] TradeResult{orderId='BUY003', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY001', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] === 증권회사 대량 주문 처리 시스템 종료 ===
+```
+
+- 시나리오3
+
+```java
+[     main] === 증권회사 대량 주문 처리 시스템 ===
+[pool-1-thread-3] BUY003 처리 중...
+[pool-1-thread-2] SELL002 처리 중...
+[pool-1-thread-1] BUY001 처리 중...
+[     main] SELL002 취소 중...
+[     main] BUY005 취소 중...
+[pool-1-thread-2] SELL002 실행 중인 주문 강제 종료...
+[pool-1-thread-2] SELL004 처리 중...
+[     main] TradeResult{orderId='SELL002', status=CANCELLED, message='주문이 취소되었습니다', errorType='CancellationException'}
+[     main] TradeResult{orderId='SELL004', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY005', status=CANCELLED, message='주문이 취소되었습니다', errorType='CancellationException'}
+[     main] TradeResult{orderId='BUY003', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='BUY001', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] === 증권회사 대량 주문 처리 시스템 종료 ===
+```
+
+- 시나리오4
+
+```java
+[     main] === 증권회사 대량 주문 처리 시스템 ===
+[pool-1-thread-3] ERROR_SELL004 처리 중...
+[pool-1-thread-1] SELL002 처리 중...
+[pool-1-thread-2] BUY003 처리 중...
+[     main] SELL002 취소 중...
+[pool-1-thread-1] SELL002 실행 중인 주문 강제 종료...
+[     main] BUY005 취소 중...
+[pool-1-thread-1] BUY005 처리 중...
+[pool-1-thread-1] BUY005 실행 중인 주문 강제 종료...
+[pool-1-thread-1] NETWORK_BUY006 처리 중...
+[pool-1-thread-3] SELL007 처리 중...
+[pool-1-thread-2] ERROR_BUY008 처리 중...
+[pool-1-thread-3] SELL009 처리 중...
+[     main] TradeResult{orderId='SELL007', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='SELL009', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] TradeResult{orderId='SELL002', status=CANCELLED, message='주문이 취소되었습니다', errorType='CancellationException'}
+[     main] TradeResult{orderId='ERROR_BUY008', status=FAILED, message='주문이 실패하였습니다', errorType='RuntimeException'}
+[     main] TradeResult{orderId='ERROR_SELL004', status=FAILED, message='주문이 실패하였습니다', errorType='RuntimeException'}
+[     main] TradeResult{orderId='BUY005', status=CANCELLED, message='주문이 취소되었습니다', errorType='CancellationException'}
+[     main] TradeResult{orderId='NETWORK_BUY006', status=FAILED, message='주문이 실패하였습니다', errorType='IOException'}
+[     main] TradeResult{orderId='BUY003', status=COMPLETED, message='주문이 성공적으로 완료되었습니다', errorType='null'}
+[     main] === 증권회사 대량 주문 처리 시스템 종료 ===
+```
+
+<br><br><br>
+
+# 섹션 14. 스레드 풀과 Executor 프레임워크2 (2문제)
