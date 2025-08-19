@@ -14,9 +14,9 @@
 | 섹션 9 | 생성자 소비자 문제1 |  |  | 1 |
 | 섹션 10 | 생성자 소비자 문제2 |  |  | 1 |
 | 섹션 11 | CAS: 동기화와 원자적 연산 |  | 1 |  |
-| 섹션 12 | 동시성 컬렉션 |  |  | 1 |
+| 섹션 12 | 동시성 컬렉션 |  |  |  |
 | 섹션 13 | 스레드 풀과 Executor 프레임워크1 |  |  | 2 |
-| 섹션 14 | 스레드 풀과 Executor 프레임워크2 |  |  | 2 |
+| 섹션 14 | 스레드 풀과 Executor 프레임워크2 |  |  | 1 |
 
 <br>
 
@@ -413,7 +413,7 @@
 
 <br><br><br>
 
-# 섹션 12. 동시성 컬렉션 (1문제)
+# 섹션 12. 동시성 컬렉션 (0문제)
 
 <br><br><br>
 
@@ -686,4 +686,148 @@
 
 <br><br><br>
 
-# 섹션 14. 스레드 풀과 Executor 프레임워크2 (2문제)
+# 섹션 14. 스레드 풀과 Executor 프레임워크2 (1문제)
+
+# 문제1: 채팅 시스템 메시지 처리 (고급)
+
+## 문제 설명
+
+채팅 시스템에서 메시지를 받아서 처리하고, 욕설을 필터링하며, 동시에 채팅방별 통계를 수집하는 통합 시스템을 만들어보세요. **각 작업의 특성에 맞는 ExecutorService 풀 전략을 선택**하고, 모든 작업을 병렬로 수행하여 최종 결과를 종합 출력합니다.
+
+## 요구사항
+
+1. Message 클래스
+    - roomId, userId, content 필드를 가진 메시지 클래스 생성
+    - 모든 필드를 초기화하는 생성자와 getter 메서드 구현
+2. ChatRoomStats 클래스
+- roomId, messageCount, score 필드를 포함
+    - roomId만 받는 생성자로 생성 시 messageCount와 score는 0으로 초기화
+    - incrementMessage 메서드로 메시지 수 증가 시 score도 "메시지수 * 10 + 50" 공식으로 재계산
+    - 모든 필드의 getter 메서드 구현
+1. ChatSystemProcessor 클래스 - 풀 전략 의사결정
+    - **메시지 처리 풀 (messagePool)**
+        - 작업 특성: 무거운 I/O 작업 시뮬레이션 (데이터베이스 저장, 외부 API 호출 등)
+        - 처리 시간: 1-3초로 길고 예측 불가능
+        - 선택할 풀 전략: FixedThreadPool(4)
+        - 선택 이유: 안정적인 리소스 사용과 과도한 스레드 생성 방지 필요
+    - **욕설 필터링 풀 (filterPool)**
+        - 작업 특성: 빠른 CPU 집약적 작업 (문자열 검색 및 매칭)
+        - 처리 시간: 100-200ms로 짧고 일정
+        - 선택할 풀 전략: CachedThreadPool
+        - 선택 이유: 빠른 응답 시간이 중요하고 작업량 급증에 유연하게 대응
+    - **통계 수집 풀 (statsPool)**
+        - 작업 특성: 중간 정도의 메모리/연산 작업 (데이터 집계 및 계산)
+        - 처리 시간: 0.5-1초로 중간 수준
+        - 선택할 풀 전략: FixedThreadPool(2)
+        - 선택 이유: 통계 데이터의 일관성 보장과 적절한 동시성 제어 필요
+    - 기타 필드
+        - 채팅방별 통계(ChatRoomStats)를 저장할 thread-safe한 Map 구조
+        - 금지어 List 구조 (바보, 멍청이, 나쁜말, 욕설 등 포함)
+        - `bannedWords = List.*of*("바보", "멍청이", "나쁜말", "욕설");`
+    - 생성자 구현
+        - 위에서 정의한 전략에 따라 3개의 ExecutorService 초기화
+        - 통계 저장용 ConcurrentHashMap 초기화
+        - 금지어 목록 초기화
+    - processMessage 메서드
+        - Message 객체를 받아 Future<String> 반환
+        - messagePool에서 Callable로 실행
+        - 1-3초 랜덤 대기로 무거운 I/O 작업 시뮬레이션
+        - 완료 시 "roomId-userId 메시지 처리 완료" 형태의 문자열 반환
+        - 관련된 로그 만들기 (예상 출력 참고)
+    - filterMessage 메서드
+        - Message 객체를 받아 Future<Boolean> 반환
+        - filterPool에서 Callable로 실행
+        - 100-200ms 랜덤 대기로 빠른 CPU 작업 시뮬레이션
+        - 메시지 내용이 금지어를 포함하면 true, 아니면 false 반환
+        - 관련된 로그 만들기 (예상 출력 참고)
+    - updateRoomStats 메서드
+        - Message 객체를 받아 Future<ChatRoomStats> 반환
+        - statsPool에서 Callable로 실행
+        - 500-1000ms 랜덤 대기로 통계 계산 시뮬레이션
+        - 현재 스레드명과 함께 통계 업데이트 시작 로그 출력
+        - roomStatsMap에서 해당 채팅방 통계 조회 후 업데이트 (없으면 새로 생성)
+        - 업데이트된 ChatRoomStats 반환
+        - 관련된 로그 만들기 (예상 출력 참고)
+    - processAllMessages 메서드
+        - Message 리스트를 받아 모든 메시지를 병렬 처리
+        - 각 메시지마다 위 3개 메서드를 동시 호출
+        - Future.get()으로 모든 결과 대기
+        - 완료된 메시지마다 상세한 처리 결과 출력 (roomId, userId, 처리결과, 욕설여부, 방점수, 소요시간)
+        - 전체 처리 시간 측정
+    - printFinalStats 메서드
+        - roomStatsMap에 있는 정보 toString()으로 출력
+    - shutdown 메서드
+        - 3개 ExecutorService 모두에 대해 단계적 종료 수행
+        - 각 풀마다 shutdown() 호출 후 15초 대기
+        - 대기 시간 내 종료되지 않으면 shutdownNow()로 강제 종료
+        - 종료 순서: 가장 빠른 filterPool → statsPool → 가장 느린 messagePool
+        - 각 풀별 종료 완료 상태와 미완료 작업 수 출력
+2. Main 클래스 - 메인 실행 시나리오
+- 테스트 데이터 준비
+    - 3개 채팅방(room1, room2, room3)에서 ChatRoomStats를 포함하여 총 12개 메시지 생성
+    - 각 방당 3, 4, 5개 메시지를 생성하고 일부는 금지어 포함하여 필터링 테스트
+    - 다양한 사용자가 메시지 전송하는 시나리오
+- 실행 순서
+    - ChatSystemProcessor 인스턴스 생성 (풀 전략 정보 자동 출력)
+    - 시스템 시작 메시지 출력
+    - 모든 메시지 병렬 처리 실행
+    - 시스템 우아한 종료 실행
+
+## 예상 출력
+
+```
+[pool-1-thread-1] 메시지 처리 시작 -> RoomId: room1, UserId: 1001
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room1, UserId: 1001
+[pool-3-thread-1] 룸 통계 업데이트 시작 -> RoomId: room1, UserId: 1001
+[      main] 완료: [ room1 ]-[ 1001 ] | 처리: [ room1-1001 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 60 | 소요시간: 2855ms
+[pool-1-thread-2] 메시지 처리 시작 -> RoomId: room1, UserId: 1002
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room1, UserId: 1002
+[pool-3-thread-2] 룸 통계 업데이트 시작 -> RoomId: room1, UserId: 1002
+[      main] 완료: [ room1 ]-[ 1002 ] | 처리: [ room1-1002 메시지 처리 완료 ] | 욕설: [ true ] | 방 점수: 70 | 소요시간: 3740ms
+[pool-1-thread-3] 메시지 처리 시작 -> RoomId: room1, UserId: 1003
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room1, UserId: 1003
+[pool-3-thread-1] 룸 통계 업데이트 시작 -> RoomId: room1, UserId: 1003
+[      main] 완료: [ room1 ]-[ 1003 ] | 처리: [ room1-1003 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 80 | 소요시간: 3584ms
+[pool-1-thread-4] 메시지 처리 시작 -> RoomId: room2, UserId: 1001
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room2, UserId: 1001
+[pool-3-thread-2] 룸 통계 업데이트 시작 -> RoomId: room2, UserId: 1001
+[      main] 완료: [ room2 ]-[ 1001 ] | 처리: [ room2-1001 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 60 | 소요시간: 2472ms
+[pool-1-thread-1] 메시지 처리 시작 -> RoomId: room2, UserId: 1004
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room2, UserId: 1004
+[pool-3-thread-1] 룸 통계 업데이트 시작 -> RoomId: room2, UserId: 1004
+[      main] 완료: [ room2 ]-[ 1004 ] | 처리: [ room2-1004 메시지 처리 완료 ] | 욕설: [ true ] | 방 점수: 70 | 소요시간: 3180ms
+[pool-1-thread-2] 메시지 처리 시작 -> RoomId: room2, UserId: 1002
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room2, UserId: 1002
+[pool-3-thread-2] 룸 통계 업데이트 시작 -> RoomId: room2, UserId: 1002
+[      main] 완료: [ room2 ]-[ 1002 ] | 처리: [ room2-1002 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 80 | 소요시간: 3801ms
+[pool-1-thread-3] 메시지 처리 시작 -> RoomId: room2, UserId: 1005
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room2, UserId: 1005
+[pool-3-thread-1] 룸 통계 업데이트 시작 -> RoomId: room2, UserId: 1005
+[      main] 완료: [ room2 ]-[ 1005 ] | 처리: [ room2-1005 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 90 | 소요시간: 3540ms
+[pool-1-thread-4] 메시지 처리 시작 -> RoomId: room3, UserId: 1005
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room3, UserId: 1005
+[pool-3-thread-2] 룸 통계 업데이트 시작 -> RoomId: room3, UserId: 1005
+[      main] 완료: [ room3 ]-[ 1005 ] | 처리: [ room3-1005 메시지 처리 완료 ] | 욕설: [ true ] | 방 점수: 60 | 소요시간: 2349ms
+[pool-1-thread-1] 메시지 처리 시작 -> RoomId: room3, UserId: 1001
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room3, UserId: 1001
+[pool-3-thread-1] 룸 통계 업데이트 시작 -> RoomId: room3, UserId: 1001
+[      main] 완료: [ room3 ]-[ 1001 ] | 처리: [ room3-1001 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 70 | 소요시간: 2603ms
+[pool-1-thread-2] 메시지 처리 시작 -> RoomId: room3, UserId: 1006
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room3, UserId: 1006
+[pool-3-thread-2] 룸 통계 업데이트 시작 -> RoomId: room3, UserId: 1006
+[      main] 완료: [ room3 ]-[ 1006 ] | 처리: [ room3-1006 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 80 | 소요시간: 2372ms
+[pool-1-thread-3] 메시지 처리 시작 -> RoomId: room3, UserId: 1007
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room3, UserId: 1007
+[pool-3-thread-1] 룸 통계 업데이트 시작 -> RoomId: room3, UserId: 1007
+[      main] 완료: [ room3 ]-[ 1007 ] | 처리: [ room3-1007 메시지 처리 완료 ] | 욕설: [ true ] | 방 점수: 90 | 소요시간: 2170ms
+[pool-1-thread-4] 메시지 처리 시작 -> RoomId: room3, UserId: 1008
+[pool-2-thread-1] 메시지 필터 시작 -> RoomId: room3, UserId: 1008
+[pool-3-thread-2] 룸 통계 업데이트 시작 -> RoomId: room3, UserId: 1008
+[      main] 완료: [ room3 ]-[ 1008 ] | 처리: [ room3-1008 메시지 처리 완료 ] | 욕설: [ false ] | 방 점수: 100 | 소요시간: 3346ms
+ChatRoomStats{roomId='room3', messageCount=5, score=100}
+ChatRoomStats{roomId='room1', messageCount=3, score=80}
+ChatRoomStats{roomId='room2', messageCount=4, score=90}
+[      main] class java.util.concurrent.ThreadPoolExecutor - shutdown 종료 완료
+[      main] class java.util.concurrent.ThreadPoolExecutor - shutdown 종료 완료
+[      main] class java.util.concurrent.ThreadPoolExecutor - shutdown 종료 완료
+```
